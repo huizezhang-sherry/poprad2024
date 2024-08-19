@@ -1,0 +1,142 @@
+---
+title: "Studying the Performance of the Jellyfish Search Optimiser for the Application of Projection Pursuit"
+date: 2024-09-04
+date-format: medium
+author: 
+ - name: "H. Sherry Zhang"
+institute: "University of Texas at Austin"
+format: 
+  revealjs:
+    scrollable: true
+    slide-number: true
+    show-slide-number: all
+    aspectratio: 169
+    theme: serif
+    preview-links: auto
+    multiplex: true
+    pdf-separate-fragments: true
+    css: style.css
+    footer: "https://sherryzhang-poprad2024.netlify.app"
+execute:
+  echo: true
+self-contained: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(echo = FALSE, 
+                      message = FALSE, 
+                      warning = FALSE,
+                      fig.align = 'center')
+library(tidyverse)
+library(ferrn)
+library(tourr)
+library(patchwork)
+
+```
+
+# [Optimisation in projection pursuit]{.r-fit-text} {.smaller}
+
+::: columns
+::: column
+-   Data: $\mathbf{X}_{n \times p}$; Basis: $\mathbf{A}_{p\times d}$
+-   Projection: $\mathbf{Y} = \mathbf{X} \cdot \mathbf{A}$
+-   Index function: $f: \mathbb{R}^{n \times d} \mapsto \mathbb{R}$
+-   Optimisation: $\arg \max_{\mathbf{A}} f(\mathbf{X} \cdot \mathbf{A}) ~~~ s.t. ~~~ \mathbf{A}^{\prime} \mathbf{A} = I_d$
+:::
+
+::: column
+-   5 vars ($x_1$ - $x_5$), 1000 obs simulated
+    -   One variable ($x_2$) is a mixture normal
+    -   others are random normal
+-   1D projection using the holes index: $\propto 1 -\frac{1}{n} \sum_{i = 1}^n \exp(-\frac{1}{2} y_i y_i^{\prime})$
+:::
+:::
+
+```{r fig.height=2.5}
+# set.seed(123456)
+# a <- animate_dist(
+#   boa5, tour_path = guided_tour(holes(), d = 1, search_f = search_geodesic)) 
+# first_dir <- a$basis[[1]]
+# last_dir <- tail(a$basis, 1)[[1]]
+first_dir <- matrix(c(0.34, -0.11, -0.14, 0.03, 0.92))
+last_dir <- matrix(c(0.01, -0.99, -0.01, 0.04, 0.007))
+p1 <- as.matrix(boa5) %*% first_dir |> 
+  as_tibble() |> 
+  ggplot() + 
+  geom_density(aes(x = V1), fill = "black") + 
+  theme_void() + 
+  theme(aspect.ratio = 1) + 
+  labs(x = "Projection", title = "start", y = "") + 
+  theme(panel.border = element_rect(fill = "transparent"))
+
+p2 <- as.matrix(boa5) %*% last_dir |> 
+  as_tibble() |> 
+  ggplot() + 
+  geom_density(aes(x = V1), fill = "black") + 
+  theme_void() + 
+  theme(aspect.ratio = 1) + 
+  labs(x = "Projection", title = "finish", y = "") + 
+  theme(panel.border = element_rect(fill = "transparent"))
+
+p1 | p2
+```
+
+::: notes
+```         
+- Projection basis which gives a d-dimensional projection; characterise, the direction from which the data get projected; 
+- Index function: maps the projection to a scalar, 
+- measures interestingness, theoretical results show that, depart from normal distribution, intuitive explanation, CLT, more observations,  data distributed as normal
+- Optimisation: max the index, subject to orthonormality constraint
+```
+:::
+
+# Motivation {.smaller}
+
+> The work also reveals inadequacies in the tour optimization algorithm, that may benefit from newly developed techniques and software tools. Exploring this area would help improve the guided tours. As new optimization techniques become available, adapting these to the guided tour would extend the technique to a broader range of problems. (Laa & Cook, 2020)
+
+## Continuation of the previous work
+
+![](figures/pca-plot.png)
+![](figures/tour.gif)
+
+
+## The Jellyfish search optimiser {.smaller}
+
+*Chou, J. S., & Truong, D. N. (2021). A novel metaheuristic optimizer inspired by behavior of jellyfish in ocean. Applied Mathematics and Computation, 389, 125535.*
+
+![](figures/JSO-paper.png)
+
+## Properties proposed 
+
+smoothness, squintability, flexibility, rotation invariance, speed
+
+![](figures/PPI-property-paper.png)
+
+## Smoothness 
+
+![](figures/smoothness.png)
+
+## Squintability
+
+![](figures/squintability.png)
+
+## Example: 
+
+
+## Simulation setup
+
+## Results
+
+
+
+
+## `r emo::ji("link")` {.smaller }
+
+-   this slide:
+    -   {{< fa link >}}: <https://sherryzhang-poprad2024.netlify.app>
+    -   {{< fa brands github >}}: <https://github.com/huizezhang-sherry/poprad2024>
+-   the `ferrn` package:
+    -   {{< fa brands github >}}: <https://huizezhang-sherry.github.io/ferrn/>
+    -   CRAN: <https://cran.r-project.org/web/packages/ferrn/index.html>
+-   paper:
