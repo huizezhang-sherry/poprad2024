@@ -1,7 +1,7 @@
 ---
 title: "Studying the Performance of the Jellyfish Search Optimiser for the Application of Projection Pursuit"
 date: 2024-09-04
-date-format: medium
+date-format: iso
 author: 
  - name: "H. Sherry Zhang"
 institute: "University of Texas at Austin"
@@ -32,7 +32,7 @@ library(tidyverse)
 library(ferrn)
 library(tourr)
 library(patchwork)
-
+load(here::here("data/sim_df.rda"))
 ```
 
 # [Optimisation in projection pursuit]{.r-fit-text} {.smaller}
@@ -107,24 +107,184 @@ p1 | p2
 
 ![](figures/JSO-paper.png)
 
+## A diagram to explain the Jellyfish search optimiser {.smaller}
+
+## A snapshot of the optimiser in the R code (maybe need to explain the tourr code??)
+
+## An animation of JSO in action
+
 ## Properties proposed 
 
-smoothness, squintability, flexibility, rotation invariance, speed
+[`r emo::ji("check")` smoothness, `r emo::ji("check")` squintability, `r emo::ji("x")` flexibility, `r emo::ji("x")` rotation invariance, `r emo::ji("check")` speed]{.r-fit-text} 
 
 ![](figures/PPI-property-paper.png)
 
 ## Smoothness 
 
+what does it mean by smooth and not smooth
+
 ![](figures/smoothness.png)
 
 ## Squintability
 
+A small squint angle because you have to be very close to the optimal
+projection plane to be able to see the structure of the data.
+
+(we see a hill over there! Now we see a hill)
+
+## Define Squintability {.smaller}
+
+::::columns
+
+:::{.column width=50%}
+**Projection distance** between two bases $A$ and $A^*$, $d(A, A^*)$:
+
+$$d(A, A^*) = \lVert AA^\prime - A^*A^{*\prime}\  \rVert _F$$
+
+where $\lVert . \rVert _F$ denotes the Frobenius norm, given by
+$\lVert M \rVert _F = \sqrt{\sum_{ij} M_{ij}^2}$. 
+
+<br> 
+
+**Index-distance curve** $g$ maps $d(A, A^*)$ to the index value $f(XA)$, such that $$g(d(A, A^*)) = f(XA)$$
+:::
+
+:::{.column width=50%}
+
+```{r}
+dt <- tibble(x = seq(0, 2, 0.02), 
+       y = 1/ (1 + exp(3.5 * (x - 1.1)))) |> 
+  mutate(dy = abs(y - lag(y)))
+
+dt |>
+  ggplot(aes(x = x, y = y)) + 
+  geom_line() + 
+  geom_point(data = dt |> filter(x == 1.1), color = "red", size = 3) + 
+  geom_abline(intercept = 0.0175 / 0.02 * 1.1 + 0.5, slope = -0.0175/0.02, 
+              linetype = "dashed") + 
+  geom_segment(aes(x = 1.1, y = 0.5, yend = -Inf), linetype = "dashed") + 
+  geom_label(aes(x = 1, y = 0.9, label = "max gradient on \n the curve: -0.4625")) + 
+  geom_label(aes(x = 1.25, y = 0, label = "d = 1.1")) + 
+  
+  theme_bw() + 
+  labs(x = "Projection distance", y = "Index value") 
+
+
+```
+
+**Squintability**: 
+
+$$\varsigma(f) = -c \times \max_{d} g'(d) \times \arg \max_{d} g'(d)$$
+
+use c = 4 to be consistent with estimating with parametric model
+
+:::
+
+::::
+
+
+## Calculate squintability {.smaller}
+
 ![](figures/squintability.png)
+
+**sigmoid curve**: $\ell(x):=\frac{1}{1+\exp(\theta_{3}(x-\theta_{2}))}\ $ 
+
+**parametric model**: $f(x)=(\theta_{1}-\theta_{4})\frac{\ell(x)-\ell(x_{\max})}{\ell(0)-\ell(x_{\max})}+\theta_{4}\ $
+
+**Squintability: ** $\varsigma=\frac{(\theta_{1}-\theta_{4})\theta_{2}\theta_{3}}{\ell(0)-\ell(x_{\max})}$ 
+
 
 ## Example: 
 
+shall I do a specific calculation example here? 
 
-## Simulation setup
+## Simulation setup {.smaller}
+
+```{r}
+dt <- tibble(
+  shape = c(rep("pipe", 4), rep("sine", 8)),
+  index = c(rep("holes", 4), "MIC", "MIC", "TIC", "TIC", "dcor2d", "loess2d", "splines2d", "stringy"),
+  d = c(6, 8, 10, 12, 6, 8, 6, 8, 6, 6, 6, 6)
+)
+```
+
+:::columns
+
+:::column
+
+**the "pipe" shape**:
+
+the holes index 
+
+data dimension d = 6, 8, 10, 12
+
+```{r}
+p1 <- ferrn::pipe1000 |> as_tibble() |> ggplot(aes(x = V1, y = V3)) + geom_point() + labs(x = "", y = "")
+p2 <- ferrn::pipe1000 |> as_tibble() |> ggplot(aes(x = V5, y = V6)) + geom_point() + labs(x = "", y = "")
+p1 | p2
+```
+
+* different JSO hyper-parameters: 
+
+    * number of jellyfishes (20, 50, 100)
+    * maximum number of tries (50, 100)
+
+:::
+
+:::column
+
+**the "sine" shape**:
+
+index function:  *"MIC", "TIC", "dcor2d", "loess2d", "splines2d", "stringy"*
+
+data dimension d = 6
+
+```{r}
+p1 <- ferrn::sine1000 |> as_tibble() |> ggplot(aes(x = V1, y = V2)) + geom_point() + labs(x = "", y = "")
+p2 <- ferrn::sine1000 |> as_tibble() |> ggplot(aes(x = V5, y = V6)) + geom_point() + labs(x = "", y = "")
+p1 | p2
+```
+
+For "MIC" and "TIC", d = 8 is also included
+
+:::
+
+
+:::
+
+## Sucess rate {.smaller}
+
+
+50 repetitions for each case to calculate success rate
+
+xxx out of 50 that finds a final index value within 0.05 of the best index value found among all 50 simulations 
+
+![](figures/success-rate.png)
+
+## Data for modelling {.smaller}
+
+calculate smoothness, squintability, as well as average speed for each case
+
+In total 52 observations
+
+```{r}
+sim_df |> 
+  dplyr::select(index, d, smoothness, 
+    squintability, n_jellies, max_tries, 
+    -I_max, P_J, time) |> 
+  mutate(time = as.numeric(time)) |>
+  arrange(index, d, n_jellies, max_tries) |> 
+  head(7) |> 
+  knitr::kable(digits = 2,  
+        col.names = c("index", "d", 
+          "smoothness", "squintability", 
+          "n. jellyfish", 
+          "max. tries", 
+          "success rate", "time (sec)"),
+        linesep = "",
+        booktabs = T)
+```
+
 
 ## Results
 
