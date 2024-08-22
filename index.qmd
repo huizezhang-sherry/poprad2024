@@ -5,6 +5,7 @@ date-format: iso
 author: 
  - name: "H. Sherry Zhang"
 institute: "University of Texas at Austin"
+css: style.css
 format: 
   revealjs:
     scrollable: true
@@ -13,9 +14,6 @@ format:
     aspectratio: 169
     theme: serif
     preview-links: auto
-    multiplex: true
-    pdf-separate-fragments: true
-    css: style.css
     footer: "https://sherryzhang-poprad2024.netlify.app"
 execute:
   echo: true
@@ -34,6 +32,12 @@ library(tourr)
 library(patchwork)
 load(here::here("data/sim_df.rda"))
 ```
+# Table of content
+
+- Background: Projection pursuit (PP) and optimisation
+- The Jellyfish Search Optimiser (JSO)
+- Two new metrics, smoothness and squintability, to characterise PP optimisation
+- Simulation study
 
 # [Optimisation in projection pursuit]{.r-fit-text} {.smaller}
 
@@ -46,14 +50,14 @@ load(here::here("data/sim_df.rda"))
 :::
 
 ::: column
--   5 vars ($x_1$ - $x_5$), 1000 obs simulated
-    -   One variable ($x_2$) is a mixture normal
-    -   others are random normal
--   1D projection using the holes index: $\propto 1 -\frac{1}{n} \sum_{i = 1}^n \exp(-\frac{1}{2} y_i y_i^{\prime})$
+<!-- -   5 vars ($x_1$ - $x_5$), 1000 obs simulated -->
+<!--     -   One variable ($x_2$) is a mixture normal -->
+<!--     -   others are random normal -->
+<!-- -   1D projection using the holes index: $\propto 1 -\frac{1}{n} \sum_{i = 1}^n \exp(-\frac{1}{2} y_i y_i^{\prime})$ -->
 :::
 :::
 
-```{r fig.height=2.5}
+```{r fig.height=2.5, eval = FALSE}
 # set.seed(123456)
 # a <- animate_dist(
 #   boa5, tour_path = guided_tour(holes(), d = 1, search_f = search_geodesic)) 
@@ -91,33 +95,68 @@ p1 | p2
 ```
 :::
 
-# Motivation {.smaller}
+# [Projection pursuit with guided tour]{.r-fit-text} {.smaller}
+
+::: columns
+::: column
+```{r echo = FALSE, fig.align="center", out.width="100%"}
+knitr::include_graphics("figures/tour-path.png")
+```
+:::
+
+::: column
+-   projection pursuit: maximises the index function to iteratively find better basis/ projection ([**blue frames**]{style="color:#2E6BA9"})
+-   guided tour: chains these projections together through interpolation (**white frames**) and produces an smooth animation
+
+TODO: tourr package logo
+:::
+:::
+
+## From past research ... {.smaller}
 
 > The work also reveals inadequacies in the tour optimization algorithm, that may benefit from newly developed techniques and software tools. Exploring this area would help improve the guided tours. As new optimization techniques become available, adapting these to the guided tour would extend the technique to a broader range of problems. (Laa & Cook, 2020)
 
-## Continuation of the previous work
+::: {layout-ncol=4}
 
-![](figures/pca-plot.png)
-![](figures/tour.gif)
+![](figures/pca-plot.png){width=50%} 
 
+![](figures/pca.gif){width=50%} 
+
+![](figures/tour.gif){width=50%} 
+
+![](figures/tour-frame078.png){width=50%} 
+:::
+
+# Now, let's investigate a new optimiser
 
 ## The Jellyfish search optimiser {.smaller}
 
-*Chou, J. S., & Truong, D. N. (2021). A novel metaheuristic optimizer inspired by behavior of jellyfish in ocean. Applied Mathematics and Computation, 389, 125535.*
+*Chou, J. S., & Truong, D. N. (2021). A novel metaheuristic optimizer inspired by behavior of jellyfish in ocean. Applied Mathematics and Computation, Volume 389, 125535.*
 
 ![](figures/JSO-paper.png)
 
 ## A diagram to explain the Jellyfish search optimiser {.smaller}
 
-## A snapshot of the optimiser in the R code (maybe need to explain the tourr code??)
+TODO
+
+## A snapshot of the optimiser in the R code 
+
+TODO
+
+maybe need to explain the tourr code?? - please don't users don't need to know that much...
 
 ## An animation of JSO in action
 
-## Properties proposed 
+TODO
 
-[`r emo::ji("check")` smoothness, `r emo::ji("check")` squintability, `r emo::ji("x")` flexibility, `r emo::ji("x")` rotation invariance, `r emo::ji("check")` speed]{.r-fit-text} 
+# [Properties of the index function <br> for characterising the optimisation task]{.r-fit-text}
+
+## [Properties proposed: smoothness, squintability, and speed]{.r-fit-text}
 
 ![](figures/PPI-property-paper.png)
+
+
+*The paper also mentions flexibility and rotation invariance but they are less relevant for the optimisation*
 
 ## Smoothness 
 
@@ -198,6 +237,8 @@ use c = 4 to be consistent with estimating with parametric model
 
 shall I do a specific calculation example here? 
 
+# [Simulation: Link JSO optimisers <br> with smoothness, squintability <br> and others]{.r-fit-text}
+
 ## Simulation setup {.smaller}
 
 ```{r}
@@ -261,11 +302,16 @@ xxx out of 50 that finds a final index value within 0.05 of the best index value
 
 ![](figures/success-rate.png)
 
-## Data for modelling {.smaller}
+## The generalised linear model  {.smaller}
 
-calculate smoothness, squintability, as well as average speed for each case
+*a binomial family and a logit link function*
 
-In total 52 observations
+<center>success rate ~ smoothness + squintability + n_jellies + max_tries + d + long_time</center>
+
+data pre-processing: 
+
+1) divide `n_jellies` and `max_tries` by 10 for interpretation, 
+2) new binary variable `long_time` for average run time over 30 seconds
 
 ```{r}
 sim_df |> 
@@ -274,7 +320,7 @@ sim_df |>
     -I_max, P_J, time) |> 
   mutate(time = as.numeric(time)) |>
   arrange(index, d, n_jellies, max_tries) |> 
-  head(7) |> 
+  head(5) |> 
   knitr::kable(digits = 2,  
         col.names = c("index", "d", 
           "smoothness", "squintability", 
@@ -286,12 +332,54 @@ sim_df |>
 ```
 
 
-## Results
+## Results {.smaller}
+
+```{r}
+sim_df2 <- sim_df |>   
+  mutate(n_jellies = n_jellies/10,
+         max_tries = max_tries/10,
+         long_time = ifelse(time > 20, 1, 0),
+         P_J = ifelse(index == "stringy", 0, P_J))
+
+mod1 <- glm(P_J ~ smoothness + squintability + d + long_time + n_jellies + max_tries, data = sim_df2, family = binomial)
+broom::tidy(mod1) |> 
+  mutate(term = c("Intercept", "Smoothness",
+   "Squintability", "Dimension (d)", 
+   "Long time", "N. jellyfish", 
+   "Max. tries")) |>
+  knitr::kable(digits = 2, format = "html", linesep = "", booktabs = T) |> 
+  kableExtra::row_spec(1:7, extra_css = "border-bottom-style: none")
+
+```
 
 
+* The signs of the variables are as expected 
+* The variable squintability and dimension are significant - sugguesting their influence the success of the optimisation
+
+## Takeaway {.smaller}
+
+* The JSO is implemented in the `tourr` package.
+
+* The two metrics, smoothness and squintability, are proposed and implemented in the `ferrn` package. They can be used to characterise the diﬀiculty of the optimisation task and inform the choice of optimiser.
+
+* Large squintability indicates a distinct difference in index values between optimal regions and others. When one jellyfish enters the optimal region, the high index value it generates will be clearly distinguishable from spurious values and lead other jellyfish to move toward the optimal region. 
 
 
-## `r emo::ji("link")` {.smaller }
+### But also notice ... {.smaller}
+
+* The two metrics are relative - comparison should be made with same parameters.
+
+* Index values should be standardised to the [0, 1] interval
+
+* Computational cost associated with population-based optimiser, i.e. JSO
+
+## `r emo::ji("link")` {.smaller}
+
+```{r echo = FALSE, eval = FALSE}
+library(qrcode)
+a <- qr_code("https://sherryzhang-porad2024.netlify.app/")
+generate_svg(a, filename = "figures/qrcode.svg")
+```
 
 -   this slide:
     -   {{< fa link >}}: <https://sherryzhang-poprad2024.netlify.app>
@@ -299,4 +387,8 @@ sim_df |>
 -   the `ferrn` package:
     -   {{< fa brands github >}}: <https://huizezhang-sherry.github.io/ferrn/>
     -   CRAN: <https://cran.r-project.org/web/packages/ferrn/index.html>
+- the `tourr` package:
+    -   {{< fa brands github >}}: <https://github.com/ggobi/tourr>
+    -  CRAN: <https://cran.r-project.org/web/packages/tourr/index.html>
 -   paper:
+    - arxiv pre-print
