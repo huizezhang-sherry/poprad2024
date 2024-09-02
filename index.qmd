@@ -15,8 +15,6 @@ format:
     theme: serif
     preview-links: auto
     footer: "https://sherryzhang-poprad2024.netlify.app"
-execute:
-  echo: true
 self-contained: true
 ---
 
@@ -32,6 +30,7 @@ library(tourr)
 library(patchwork)
 load(here::here("data/sim_df.rda"))
 ```
+
 # Table of content
 
 - Background: Projection pursuit (PP) and optimisation
@@ -50,21 +49,22 @@ load(here::here("data/sim_df.rda"))
 :::
 
 ::: column
-<!-- -   5 vars ($x_1$ - $x_5$), 1000 obs simulated -->
-<!--     -   One variable ($x_2$) is a mixture normal -->
-<!--     -   others are random normal -->
-<!-- -   1D projection using the holes index: $\propto 1 -\frac{1}{n} \sum_{i = 1}^n \exp(-\frac{1}{2} y_i y_i^{\prime})$ -->
+-   5 vars ($x_1$ - $x_5$), 1000 obs simulated
+    -   One variable ($x_2$) is a mixture normal
+    -   others are random normal
+-   1D projection using the holes index: $\propto 1 -\frac{1}{n} \sum_{i = 1}^n \exp(-\frac{1}{2} y_i y_i^{\prime})$
 :::
 :::
 
-```{r fig.height=2.5, eval = FALSE}
+```{r fig.height=2.5}
 # set.seed(123456)
 # a <- animate_dist(
-#   boa5, tour_path = guided_tour(holes(), d = 1, search_f = search_geodesic)) 
+#   boa5, tour_path = guided_tour(holes(), d = 1, search_f = search_geodesic))
 # first_dir <- a$basis[[1]]
 # last_dir <- tail(a$basis, 1)[[1]]
 first_dir <- matrix(c(0.34, -0.11, -0.14, 0.03, 0.92))
 last_dir <- matrix(c(0.01, -0.99, -0.01, 0.04, 0.007))
+
 p1 <- as.matrix(boa5) %*% first_dir |> 
   as_tibble() |> 
   ggplot() + 
@@ -95,7 +95,7 @@ p1 | p2
 ```
 :::
 
-# [Projection pursuit with guided tour]{.r-fit-text} {.smaller}
+# [Guided tour: chain projections together]{.r-fit-text} {.smaller}
 
 ::: columns
 ::: column
@@ -108,9 +108,87 @@ knitr::include_graphics("figures/tour-path.png")
 -   projection pursuit: maximises the index function to iteratively find better basis/ projection ([**blue frames**]{style="color:#2E6BA9"})
 -   guided tour: chains these projections together through interpolation (**white frames**) and produces an smooth animation
 
-TODO: tourr package logo
 :::
 :::
+
+# [Projection pursuit with guided tour]{.r-fit-text} {.smaller}
+
+::: columns
+::: column
+```{r fig.height=10}
+first_dir <- matrix(c(0.34, -0.11, -0.14, 0.03, 0.92))
+last_dir <- matrix(c(0.01, -0.99, -0.01, 0.04, 0.007))
+
+p1 <- as.matrix(boa5) %*% first_dir |> 
+  as_tibble() |> 
+  ggplot() + 
+  geom_density(aes(x = V1), fill = "black") + 
+  theme_void() + 
+  theme(aspect.ratio = 1) + 
+  labs(x = "Projection", title = "start", y = "") + 
+  theme(panel.border = element_rect(fill = "transparent"), 
+        text=element_text(size=21))
+
+p2 <- as.matrix(boa5) %*% last_dir |> 
+  as_tibble() |> 
+  ggplot() + 
+  geom_density(aes(x = V1), fill = "black") + 
+  theme_void() + 
+  theme(aspect.ratio = 1) + 
+  labs(x = "Projection", title = "finish", y = "") + 
+  theme(panel.border = element_rect(fill = "transparent"), 
+        text=element_text(size=21))
+
+p1 / p2
+```
+:::
+
+::: column
+```{r eval = FALSE}
+set.seed(123456)
+dt <- boa5 |> rename(x3 = x8, x4= x9, x5= x10)
+render_gif(dt,
+           tour_path = guided_tour(holes(), d = 1, 
+                                   search_f = search_geodesic),
+            display_dist(),
+           frames = 45,
+           rescale = FALSE,
+           gif_file = here::here("figures", "tour-demo.gif"))
+
+```
+
+```{r}
+knitr::include_graphics("figures/tour-demo.gif")
+```
+:::
+:::
+
+
+# The tour family {.smaller}
+
+::: columns
+::: {.column width="70%"}
+-   **grand tour**: randomly selected bases
+-   **guided tour**: basis selection is optimising an index function
+-   **planned tour**: interpolates between a set of input bases
+-   **local tour**: alternating between the starting projection and randomly selected nearby projections
+
+Software in R: the [tourr](https://ggobi.github.io/tourr/index.html) package
+
+-   the Journal of Statistical Software [paper](https://www.jstatsoft.org/article/view/v040i02)
+:::
+
+::: {.column width="30%"}
+```{r fig.height=10}
+knitr::include_graphics("figures/tourr-logo.png")
+```
+:::
+:::
+
+<!-- ## This is what you get from just projection pursuit, this is what you get when you add guided tour {.smaller} -->
+
+<!-- penguins data, cluster -->
+
 
 ## From past research ... {.smaller}
 
@@ -133,21 +211,64 @@ TODO: tourr package logo
 
 *Chou, J. S., & Truong, D. N. (2021). A novel metaheuristic optimizer inspired by behavior of jellyfish in ocean. Applied Mathematics and Computation, Volume 389, 125535.*
 
-![](figures/JSO-paper.png)
+![](figures/JSO-paper.png){fig-align="center"}
 
-## A diagram to explain the Jellyfish search optimiser {.smaller}
+## [The Jellyfish search optimiser algorithm]{.r-fit-text} {.smaller}
 
-TODO
+**Initialise** jellyfishes in the search space
 
-## A snapshot of the optimiser in the R code 
+**Calculate** the time control parameter: $c_t = | (1 - \frac{t}{\text{Max}_\text{iter}} (2 \times \text{rand}(0, 1) - 1) |$ 
 
-TODO
+  where $t$ is the number of iterations
 
-maybe need to explain the tourr code?? - please don't users don't need to know that much...
+<br>
 
-## An animation of JSO in action
+**For each jellyfish $A_i$ at time $t$: IF $c_t >= 0.5$ THEN **
 
-TODO
+*(jellyfish follows ocean current)*
+
+$$A_i(t + 1) = A_i(t) + \text{rand}(0, 1) \times \overrightarrow{\text{trend}}$$
+ 
+ $$\overrightarrow{\text{trend}} = A^* - \beta \times \text{rand}(0, 1) \times \mu$$
+ 
+where $X^*$ is the best jellyfish, $\beta = 3$, and $\mu$ is the mean of the current jellyfishes
+ 
+## [The Jellyfish search optimiser algorithm]{.r-fit-text} {.smaller}
+
+**IF $c_t < 0.5$ THEN ** *(jellyfish follows ocean current)*
+
+...
+
+**ELSE IF $\text{rand}(0, 1) > (1 - c(t))$ **
+
+*(jellyfish exhibits passive motions)* 
+  $$A_i(t + 1) = A_i(t) + \gamma \times \text{rand}(0, 1) \times (U_b - L_b)$$
+where $\gamma = 0.1$ and $U_b - L_b = 1$ are used 
+ 
+**ELSE **
+
+*(jellyfish exhibits active motions)*
+ 
+  $$A_i(t + 1) = A_i(t) +  \text{rand}(0, 1) \times \overrightarrow{\text{Direction}}$$
+  
+\begin{equation}  
+  \overrightarrow{\text{Direction}} = 
+  \begin{cases}
+  
+  A_j(t) - A_i(t) \quad \text{if} \quad f(X \cdot A_i) \ge f(X \cdot A_j) \\
+  A_i(t) - A_j(t) \quad \text{if} \quad f(X \cdot A_i) < f(X \cdot A_j) \\
+  
+  \end{cases}
+
+\end{equation}
+
+where  $A_j$ is a randomly selected jellyfish
+
+<!-- ## Some visualisation of the optimiser {.smaller} -->
+
+<!-- - lots of paths -->
+
+<!-- - one of them go really close to the optimal -->
 
 # [Properties of the index function <br> for characterising the optimisation task]{.r-fit-text}
 
@@ -169,7 +290,7 @@ what does it mean by smooth and not smooth
 A small squint angle because you have to be very close to the optimal
 projection plane to be able to see the structure of the data.
 
-(we see a hill over there! Now we see a hill)
+![](figures/squintability-comic.png){fig-align="center"}
 
 ## Define Squintability {.smaller}
 
@@ -231,11 +352,6 @@ use c = 4 to be consistent with estimating with parametric model
 **parametric model**: $f(x)=(\theta_{1}-\theta_{4})\frac{\ell(x)-\ell(x_{\max})}{\ell(0)-\ell(x_{\max})}+\theta_{4}\ $
 
 **Squintability: ** $\varsigma=\frac{(\theta_{1}-\theta_{4})\theta_{2}\theta_{3}}{\ell(0)-\ell(x_{\max})}$ 
-
-
-## Example: 
-
-shall I do a specific calculation example here? 
 
 # [Simulation: Link JSO optimisers <br> with smoothness, squintability <br> and others]{.r-fit-text}
 
@@ -300,7 +416,7 @@ For "MIC" and "TIC", d = 8 is also included
 
 xxx out of 50 that finds a final index value within 0.05 of the best index value found among all 50 simulations 
 
-![](figures/success-rate.png)
+![](figures/success-rate.png){fig-align="center"}
 
 ## The generalised linear model  {.smaller}
 
@@ -371,7 +487,7 @@ broom::tidy(mod1) |>
 
 * Index values should be standardised to the [0, 1] interval
 
-* Computational cost associated with population-based optimiser, i.e. JSO
+* Computational cost associated with swarm-based optimiser, i.e. JSO
 
 ## `r emo::ji("link")` {.smaller}
 
@@ -390,5 +506,3 @@ generate_svg(a, filename = "figures/qrcode.svg")
 - the `tourr` package:
     -   {{< fa brands github >}}: <https://github.com/ggobi/tourr>
     -  CRAN: <https://cran.r-project.org/web/packages/tourr/index.html>
--   paper:
-    - arxiv pre-print
