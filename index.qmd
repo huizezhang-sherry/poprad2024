@@ -416,6 +416,17 @@ For "MIC" and "TIC", d = 8 is also included
 
 :::
 
+## [A flavour of the indexes]{.r-fit-text} {.smaller} 
+
+The `loess` index: $$I_{\text{loess}}(A) = \max \left(1 - \frac{var(e^{\text{loess}}_{y_1 \sim y_2})}{var(y_1)}, 1 - \frac{var(e^{\text{loess}}_{y_2 \sim y_1})}{var(y_2)}\right)$$
+
+The `stringy` index: 
+
+non-smooth index based on scagnostics. It measures the proportion of vertices with two edges in the minimum spanning tree (MST) of the projection to detect whether the projection forms a straight line. The index is calculated as
+
+$$I_{stringy}(A) = \frac{\text{number of vertices with 2 edges}}{\text{number of total vertices with more than one edge}} $$ 
+
+
 ## Sucess rate {.smaller}
 
 
