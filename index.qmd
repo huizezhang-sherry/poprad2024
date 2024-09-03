@@ -1,10 +1,10 @@
 ---
 title: "Studying the Performance of the Jellyfish Search Optimiser for the Application of Projection Pursuit"
-date: 2024-09-04
+date: 2024-09-03
 date-format: iso
 author: 
  - name: "H. Sherry Zhang"
-institute: "University of Texas at Austin"
+institute: "University of Texas at Austin, USA"
 css: style.css
 format: 
   revealjs:
@@ -279,11 +279,18 @@ where  $A_j$ is a randomly selected jellyfish
 
 *The paper also mentions flexibility and rotation invariance but they are less relevant for the optimisation*
 
-## Smoothness 
+## Smoothness {.smaller}
 
-what does it mean by smooth and not smooth
+Theoretically can be defined by the Sobolev index $k$ in the Sobolev space $W^{k, p}(\mathbb{R})$. 
+
+Computationally, random projections in the space can be seen as a random fields, hence fit a Gaussian process model with a Matérn covariance function.
 
 ![](figures/smoothness.png)
+
+Matérn covariance function: $K(u)=K_{\nu,\eta,\ell}(u):=\eta^2\frac{\left(\sqrt{2\nu}\frac{u}{\ell}\right)^{\nu}}{\Gamma(\nu)2^{\nu-1}}\mathcal{K}_{\nu}\left(\sqrt{2\nu}\frac{u}{\ell}\right)\ , u\geq0$
+
+
+where $\nu>0$ is the smoothness parameter, $\eta$ is the outputscale, $\ell$ is the lengthscale, and $\mathcal{K}_\nu$ is the modified Bessel function. 
 
 ## Squintability
 
@@ -347,9 +354,9 @@ use c = 4 to be consistent with estimating with parametric model
 
 ![](figures/squintability.png)
 
-**sigmoid curve**: $\ell(x):=\frac{1}{1+\exp(\theta_{3}(x-\theta_{2}))}\ $ 
+**sigmoid curve**: $\ell(x):=\frac{1}{1+\exp(\theta_{3}(x-\theta_{2}))}\ $ such that $\ell(\theta_2)=0.5$
 
-**parametric model**: $f(x)=(\theta_{1}-\theta_{4})\frac{\ell(x)-\ell(x_{\max})}{\ell(0)-\ell(x_{\max})}+\theta_{4}\ $
+**parametric model**: $f(x)=(\theta_{1}-\theta_{4})\frac{\ell(x)-\ell(x_{\max})}{\ell(0)-\ell(x_{\max})}+\theta_{4}\ $ such that $f(0) = \theta_1$ and $f(x_{\text{max}}) = \theta_4$
 
 **Squintability: ** $\varsigma=\frac{(\theta_{1}-\theta_{4})\theta_{2}\theta_{3}}{\ell(0)-\ell(x_{\max})}$ 
 
@@ -384,7 +391,7 @@ p1 | p2
 * different JSO hyper-parameters: 
 
     * number of jellyfishes (20, 50, 100)
-    * maximum number of tries (50, 100)
+    * maximum number of iteration (50, 100)
 
 :::
 
